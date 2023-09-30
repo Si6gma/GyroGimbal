@@ -1,6 +1,6 @@
 # LaserAI
 
-Work In Progress
+**Work In Progress**
 
 This project uses OpenCV to detect faces in a webcam feed, and two servos controlled by an Arduino to move a laser pointer to follow the detected face.
 
