@@ -17,7 +17,7 @@ The laser is at the origin for all the diagrams below:
 
 `center_x` and `center_y` in `facialRecog.py` are the x and y coordinates
 
-z coorinate is the distance between the object and the laser, which is not measurable due to technical limitations, therefore will require manual calibration beforehand.
+`Z coordinate` is the distance between the object and the laser, which is not measurable due to technical limitations, therefore will require manual calibration beforehand.
 
 ## Components
 
@@ -30,6 +30,11 @@ z coorinate is the distance between the object and the laser, which is not measu
 
 - Python 3
 - OpenCV Python library
+
+```
+pip install opencv-python
+```
+
 - PySerial library for Python-Arduino communication
 - Arduino IDE
 
