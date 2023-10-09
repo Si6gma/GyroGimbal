@@ -30,13 +30,18 @@ The laser is at the origin for all the diagrams below:
 
 - Python 3
 - OpenCV Python library
-
-```
-pip install opencv-python
-```
-
 - PySerial library for Python-Arduino communication
 - Arduino IDE
+
+- Enable the Virtual Environment by inputting the following command
+*On Windows*:
+```
+.\env\Scripts\activate
+```
+*On macOS/Linus*:
+```
+source env/bin/activate
+```
 
 ## How It Works
 
