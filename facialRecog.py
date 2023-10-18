@@ -1,8 +1,16 @@
 import cv2
 import math
+import serial
+import time
 
 # Load the Haar cascade file
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+
+# Create a serial connection
+ser = serial.Serial('/dev/cu.usbmodemDC5475C3BB642', 115200)
+
+# Give some time for the connection to establish
+time.sleep(2)
 
 
 # Open the webcam
@@ -52,6 +60,10 @@ while True:
         # Sending the coordinates to the function to calculate the angle, (y is inverted since 0,0 is on the top left and we want it to be on the bottom left)
         yaw = anglecalc(c_x,f_h-c_y)
         print(yaw)
+        data = str(yaw).encode()
+        ser.write(data)
+
+        # time.sleep(.01)
 
 
     # Draws a green point at the center of the frame
@@ -67,3 +79,4 @@ while True:
 # Release the webcam and destroy all windows
 cap.release()
 cv2.destroyAllWindows()
+ser.close()
