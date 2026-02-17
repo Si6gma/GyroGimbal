@@ -84,8 +84,8 @@ sudo apt-get upgrade -y
 sudo apt-get install -y python3-pip python3-opencv libcamera-dev
 
 # Clone repository
-git clone https://github.com/Si6gma/LaserTurret.git
-cd LaserTurret
+git clone https://github.com/Si6gma/GyroGimbal.git
+cd GyroGimbal
 
 # Install Python packages
 pip3 install -r requirements.txt
@@ -136,7 +136,8 @@ hostname -I
 - **Center Button**: Return to center position
 - **Mobile Friendly**: Works on phones and tablets
 
-![Web Interface](assets/Dashboard.png)
+<!-- Screenshot: Add assets/Dashboard.png here when ready -->
+<!-- ![Web Interface](assets/Dashboard.png) -->
 
 ### Option 2: Gamepad Control
 
@@ -233,7 +234,7 @@ Gamepad Input → Pygame Events → Position Update → PCA9685 → Servos
 ## Project Structure
 
 ```
-LaserTurret/
+GyroGimbal/
 ├── src/
 │   ├── gimbal_controller.py   # Main standalone application
 │   ├── web_server.py           # Flask web interface
