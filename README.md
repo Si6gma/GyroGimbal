@@ -1,260 +1,235 @@
-# Laser Turret
+# Pi Gimbal Stabilizer
 
-> Computer vision-powered face tracking with Arduino-controlled servos
+A 2-axis camera gimbal stabilizer with auto-framing and IMU-based stabilization, running entirely on Raspberry Pi.
 
-⚠️ **SAFETY FIRST**: This project involves moving servos. Read the [Safety Section](#safety) before use.
+## Features
 
----
+- **IMU-Based Stabilization**: Uses MPU6050/MPU9250 gyroscope and accelerometer to compensate for camera shake
+- **Auto-Framing**: Detects people and automatically keeps them centered with proper composition
+- **Real-Time Subject Tracking**: Face and body detection with smooth servo following
+- **Photo Capture**: Capture perfectly framed photos with single keypress
+- **2-Axis Control**: Pitch and yaw servo control via PCA9685 PWM driver
+- **All-in-One Raspberry Pi**: No Arduino required - everything runs on the Pi
 
-## ✨ Features
+## Hardware Requirements
 
-- 🎯 **Real-time face tracking** using OpenCV Haar cascades
-- 🔄 **2-axis servo control** (pitch + yaw) via Arduino
-- 🔌 **Serial communication** between Python and Arduino
-- 🖥️ **Live video preview** with face detection overlay
-- ⚡ **Responsive tracking** with coordinate transformation
+| Component | Specification | Purpose |
+|-----------|--------------|---------|
+| Raspberry Pi | 3B+ or 4 (4 recommended) | Main controller |
+| Camera | Pi Camera Module V2 or USB webcam | Video capture |
+| Servo Driver | PCA9685 16-channel PWM (I2C) | Servo control |
+| Servos | 2x MG996R or DS3218 (high torque) | Gimbal movement |
+| IMU | MPU6050 or MPU9250 (I2C) | Motion sensing |
+| Power Supply | 5V 4A (separate from Pi) | Servo power |
+| Gimbal Frame | 3D printed or purchased | Camera mount |
 
----
+## Wiring
 
-## 📋 Requirements
+```
+PCA9685 (Servo Driver):
+    VCC  -> Pi 3.3V or 5V
+    GND  -> Pi GND
+    SDA  -> Pi GPIO 2 (Pin 3)
+    SCL  -> Pi GPIO 3 (Pin 5)
+    V+   -> External 5V 4A power supply
+    GND  -> External PSU GND (common with Pi)
+    
+    Servo Pitch -> Channel 0
+    Servo Yaw   -> Channel 1
 
-### Hardware
-| Component | Specification |
-|-----------|--------------|
-| Arduino | UNO, Nano, or Mega |
-| Servos | 2x SG90 micro servos |
-| Camera | USB webcam or built-in |
-| Cables | USB cable, jumper wires |
-| Power | 5V 1A (USB powered) |
+MPU6050/MPU9250 (IMU):
+    VCC  -> Pi 3.3V
+    GND  -> Pi GND
+    SDA  -> Pi GPIO 2 (Pin 3) [shared with PCA9685]
+    SCL  -> Pi GPIO 3 (Pin 5) [shared with PCA9685]
+    
+Pi Camera:
+    Connect to CSI port on Pi
 
-### Software
-- Python 3.8+
-- Arduino IDE 1.8+ or Arduino CLI
-- OpenCV Python bindings
+OR USB Camera:
+    Connect to USB port
+```
 
----
+## Installation
 
-## 🚀 Installation
+### 1. Enable I2C on Raspberry Pi
 
-### Step 1: Clone the Repository
 ```bash
+sudo raspi-config
+# Navigate to: Interface Options -> I2C -> Enable
+sudo reboot
+```
+
+Verify I2C is working:
+```bash
+sudo apt-get install i2c-tools
+sudo i2cdetect -y 1
+```
+You should see devices at `0x40` (PCA9685) and `0x68` (MPU6050).
+
+### 2. Install Dependencies
+
+```bash
+# Update system
+sudo apt-get update
+sudo apt-get upgrade -y
+
+# Install required packages
+sudo apt-get install -y python3-pip python3-opencv libcamera-dev
+
+# Clone repository
 git clone https://github.com/Si6gma/LaserTurret.git
 cd LaserTurret
+
+# Install Python packages
+pip3 install -r requirements.txt
 ```
 
-### Step 2: Install Python Dependencies
-```bash
-pip install -r requirements.txt
-```
+### 3. Configure Hardware
 
-Requirements:
-- `opencv-python>=4.5.0`
-- `pyserial>=3.5`
-- `numpy>=1.20.0`
+Edit `config.py` to match your setup:
 
-### Step 3: Configure Serial Port
-Copy the example config and edit:
-```bash
-cp config_local_example.py config_local.py
-```
-
-Edit `config_local.py`:
 ```python
-SERIAL_PORT = "/dev/cu.usbmodemXXXXXXX"  # macOS
-# SERIAL_PORT = "/dev/ttyACM0"           # Linux
-# SERIAL_PORT = "COM3"                   # Windows
-SERIAL_BAUD = 9600
-CAMERA_INDEX = 0  # 0=default, 1=external webcam
+# If using USB camera instead of Pi Camera
+CAMERA_INDEX = 1
+
+# Adjust servo limits if needed
+PITCH_MIN = 0
+PITCH_MAX = 180
+
+# Fine-tune stabilization
+STABILIZATION_GAIN = 0.7  # Increase if footage is still shaky
 ```
 
-Find your port:
-- **macOS/Linux**: `ls /dev/tty.*` or `ls /dev/cu.*`
-- **Windows**: Check Device Manager → Ports (COM & LPT)
-- **Arduino IDE**: Tools → Port
+## Usage
 
-### Step 4: Upload Arduino Firmware
-1. Open `motorControls/motorControls.ino` in Arduino IDE
-2. Select your board: Tools → Board → Arduino UNO (or your board)
-3. Select port: Tools → Port → [your port]
-4. Click Upload (→)
+### Start the Gimbal
 
-### Step 5: Wire the Hardware
-```
-Arduino Pin 9  → Pitch Servo Signal (orange/yellow)
-Arduino Pin 10 → Yaw Servo Signal   (orange/yellow)
-5V             → Servo VCC (red)    (both servos)
-GND            → Servo GND (brown)  (both servos)
-USB            → Computer
-```
-
----
-
-## 💻 Usage
-
-### Start the Tracking
 ```bash
-python facialRecog.py
+cd src
+sudo python3 gimbal_controller.py
 ```
 
 ### Controls
+
 | Key | Action |
 |-----|--------|
-| `q` | Quit application |
+| `c` | Capture photo |
+| `s` | Toggle stabilization on/off |
+| `t` | Toggle tracking on/off |
+| `q` | Quit |
 
-### Expected Output
+### Photo Output
+
+Photos are saved to `./photos/` with timestamp:
 ```
-Connecting to Arduino on /dev/cu.usbmodemDC5475C3BB642...
-⚠️  SAFETY REMINDER: Ensure laser is removed or replaced with LED before use!
-Press 'q' to quit
-
-Video resolution: 640x480
-b'45'
-b'46'
-b'44'
-...
-```
-
-### Window Preview
-You should see:
-- Live webcam feed with a **red rectangle** around detected faces
-- **Red dot** at the center of detected face
-- **Green dot** at the center of the frame
-- Servos moving to track your face
-
----
-
-## 🔧 Calibration
-
-### Servo Range Adjustment
-Edit `motorControls/motorControls.ino`:
-```cpp
-const int PITCH_MIN = 0;    // Minimum pitch angle
-const int PITCH_MAX = 180;  // Maximum pitch angle
-const int YAW_MIN = 0;      // Minimum yaw angle
-const int YAW_MAX = 180;    // Maximum yaw angle
+photos/
+  capture_20240217_143022.jpg
+  capture_20240217_143156.jpg
 ```
 
-### Camera Selection
-If you have multiple cameras:
+## How It Works
+
+### Stabilization Algorithm
+
+1. **IMU Sampling**: MPU6050 samples gyroscope and accelerometer at 100Hz
+2. **Sensor Fusion**: Complementary filter combines gyro (fast response) and accel (drift-free)
+3. **Motion Compensation**: Detected rotation is inverted and applied to servos
+4. **Smoothing**: Low-pass filter and jerk limiting prevent servo jitter
+
+### Auto-Framing
+
+1. **Detection**: OpenCV Haar cascades detect faces/bodies
+2. **Tracking**: Kalman filter predicts subject movement
+3. **Composition**: Calculates optimal gimbal angles using rule of thirds
+4. **Smoothing**: Exponential moving average prevents hunting
+
+### Coordinate Transform
+
+```
+Camera Frame (pixels)     IMU (degrees/s)      Servo (degrees)
+┌─────────────────┐      ┌─────────────┐      ┌─────────────┐
+│   Subject       │  →   │  Gyro X     │  →   │  Pitch      │
+│     ●           │      │  Gyro Y     │      │  Yaw        │
+│   (x, y)        │      │  Gyro Z     │      │             │
+└─────────────────┘      └─────────────┘      └─────────────┘
+```
+
+## Tuning
+
+### Stabilization Too Aggressive
+
 ```python
-# Try different indices
-CAMERA_INDEX = 0  # Default camera
-CAMERA_INDEX = 1  # External USB camera
+# config.py
+STABILIZATION_GAIN = 0.4  # Reduce compensation
+STABILIZATION_SMOOTHING = 0.5  # More smoothing
 ```
 
-### Tracking Smoothness
-Adjust in `facialRecog.py`:
+### Tracking Too Slow
+
 ```python
-# Higher = more smoothing but more lag
-SMOOTHING_FACTOR = 0.3
+# config.py
+TRACKING_SMOOTHING = 0.3  # Faster response
 ```
 
----
+### Servo Jitter
 
-## 🏗️ Project Structure
+1. Check power supply - servos need stable 5V
+2. Increase smoothing values
+3. Check I2C cable length (keep under 30cm)
+4. Add capacitors near servo power input
+
+## Project Structure
 
 ```
 LaserTurret/
-├── facialRecog.py              # Main application
-├── config_local_example.py     # Example configuration
+├── src/
+│   ├── gimbal_controller.py   # Main application
+│   ├── servo_driver.py         # PCA9685 servo control
+│   ├── imu_sensor.py           # MPU6050 interface
+│   ├── stabilizer.py           # Sensor fusion & PID
+│   └── auto_framing.py         # Subject detection & framing
+├── config.py                   # Hardware configuration
 ├── requirements.txt            # Python dependencies
-├── motorControls/
-│   └── motorControls.ino       # Arduino firmware
-├── assets/                     # Documentation images
 └── README.md
 ```
 
----
+## Troubleshooting
 
-## ⚠️ Safety
-
-### Critical Warnings
-1. **NEVER aim at eyes** - Even low-power lasers can cause permanent damage
-2. **Secure servos** - Ensure mechanical assembly is stable
-3. **Power limits** - Don't exceed servo voltage ratings
-
-### Safe Demo Options
-| Mode | Description |
-|------|-------------|
-| **LED Mode** (Recommended) | Replace laser with LED |
-| **Pointer Mode** | Use a cardboard pointer |
-| **No-Light Mode** | Servo movement only |
-
-### Pre-Flight Checklist
-- [ ] Laser removed or replaced with LED
-- [ ] Servos mounted securely
-- [ ] All wires connected correctly
-- [ ] Power supply adequate
-- [ ] Demo area clear
-
----
-
-## 🐛 Troubleshooting
-
-### "Cannot connect to Arduino"
+### "No I2C devices found"
 ```bash
-# Check available ports
-ls /dev/tty.* /dev/cu.*  # macOS/Linux
-# or check Device Manager on Windows
+# Check I2C is enabled
+sudo raspi-config
 
-# Update config_local.py with correct port
+# Check wiring - common ground between Pi and servos
+# Verify device addresses
+sudo i2cdetect -y 1
 ```
 
-### "No camera detected"
-```python
-# Try different camera indices in config_local.py
-CAMERA_INDEX = 0  # Try 0, 1, 2...
+### "Camera not detected"
+```bash
+# For Pi Camera
+sudo raspi-config  # Enable camera interface
+# For USB camera
+check CAMERA_INDEX in config.py (try 0, 1, 2...)
 ```
 
-### "Servos not moving"
-- Check wiring (signal, power, ground)
-- Verify Arduino sketch uploaded successfully
-- Check serial port isn't open in another program
+### Servos not moving
+1. Check external power supply is connected
+2. Verify PCA9685 V+ is powered (not just VCC)
+3. Check servo channel numbers in config
+4. Test with `servo_driver.py` directly
 
-### "Jerky servo movement"
-- Increase `delay()` in Arduino code
-- Reduce frame rate in OpenCV
-- Check power supply (add external 5V if needed)
+### Poor stabilization
+1. Calibrate IMU on startup (keep still for 2 seconds)
+2. Adjust STABILIZATION_GAIN
+3. Check IMU is firmly mounted to camera
+4. Reduce mechanical backlash in gimbal
+
+## License
+
+MIT License - See LICENSE file
 
 ---
 
-## 🗺️ Roadmap
-
-- [ ] Add LED mode toggle in software
-- [ ] Implement full 2-axis (pitch + yaw) control
-- [ ] Add distance estimation using face size
-- [ ] Configuration file for all settings
-- [ ] Smoother servo movement with easing
-- [ ] Add calibration wizard
-
----
-
-## 📚 How It Works
-
-### Coordinate Transformation
-```
-Webcam Frame (pixels)    →    Angles (degrees)
-┌─────────────────┐           ┌─────────────┐
-│    (c_x, c_y)   │           │ pitch, yaw  │
-│        ●        │  arctan   │      ●      │
-│       /│        │  ───────→ │     /       │
-│      / θ        │           │    /        │
-│     /____________│           │   /_________│
-└─────────────────┘           └─────────────┘
-```
-
-1. OpenCV detects face → bounding box
-2. Calculate center point (c_x, c_y)
-3. Transform to angles using `arctan()`
-4. Send angles via serial to Arduino
-5. Arduino moves servos to position
-
----
-
-## 📝 License
-
-MIT License - See [LICENSE](LICENSE) file
-
----
-
-*Built for learning computer vision and hardware integration.*
+*Built for smooth footage and perfect composition.*
