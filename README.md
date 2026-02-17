@@ -136,7 +136,7 @@ hostname -I
 - **Center Button**: Return to center position
 - **Mobile Friendly**: Works on phones and tablets
 
-![Web Interface](https://placehold.co/800x450/0d1117/8A00FF?text=Web+Control+Interface)
+![Web Interface](assets/Dashboard.png)
 
 ### Option 2: Gamepad Control
 
