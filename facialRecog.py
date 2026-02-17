@@ -2,6 +2,17 @@ import cv2
 import math
 import serial
 import time
+import os
+
+# Import configuration
+try:
+    from config_local import SERIAL_PORT, SERIAL_BAUD, CAMERA_INDEX, DEFAULT_PITCH
+except ImportError:
+    # Default configuration - update these for your system
+    SERIAL_PORT = "/dev/cu.usbmodemDC5475C3BB642"  # Change to your Arduino port
+    SERIAL_BAUD = 9600
+    CAMERA_INDEX = 1  # 0 for default camera, 1 for external webcam
+    DEFAULT_PITCH = 40
 
 # Load the Haar cascade file for face detection
 face_cascade = cv2.CascadeClassifier(
@@ -9,13 +20,17 @@ face_cascade = cv2.CascadeClassifier(
 )
 
 # Establish a serial connection
-ser = serial.Serial("/dev/cu.usbmodemDC5475C3BB642", 9600)
+print(f"Connecting to Arduino on {SERIAL_PORT}...")
+ser = serial.Serial(SERIAL_PORT, SERIAL_BAUD)
 
 # Allow some time for the connection to establish
 time.sleep(2)
 
+print("⚠️  SAFETY REMINDER: Ensure laser is removed or replaced with LED before use!")
+print("Press 'q' to quit\n")
+
 # Open the webcam (the value inside depends on your system)
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(CAMERA_INDEX)
 
 # Store the resolution of the camera (in pixels)
 f_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -60,7 +75,7 @@ while True:
         # Calculate angles and send to Arduino via serial connection
         yaw = anglecalc(c_x, f_h - c_y)
         # pitch = anglecalc(c_z,c_x)
-        pitch = 40
+        pitch = DEFAULT_PITCH
         data = str(yaw).encode()
         print(data)
         # time.sleep(1)
