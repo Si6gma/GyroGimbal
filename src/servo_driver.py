@@ -31,7 +31,10 @@ try:
     import busio
     from adafruit_pca9685 import PCA9685
     from adafruit_motor import servo
-    HARDWARE_AVAILABLE = True
+    # Verify we have actual hardware pins available
+    HARDWARE_AVAILABLE = hasattr(board, 'SCL') and hasattr(board, 'SDA')
+    if not HARDWARE_AVAILABLE:
+        logging.warning("Board pins not available. Running in simulation mode.")
 except ImportError:
     HARDWARE_AVAILABLE = False
     logging.warning("Adafruit libraries not available. Running in simulation mode.")
@@ -177,5 +180,8 @@ class ServoDriver:
     
     def __del__(self):
         """Cleanup on destruction."""
-        if HARDWARE_AVAILABLE and self.pca:
-            self.pca.deinit()
+        if HARDWARE_AVAILABLE and hasattr(self, 'pca') and self.pca:
+            try:
+                self.pca.deinit()
+            except:
+                pass

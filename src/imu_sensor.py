@@ -29,7 +29,10 @@ try:
     import board
     import busio
     import adafruit_mpu6050
-    HARDWARE_AVAILABLE = True
+    # Verify we have actual hardware pins available
+    HARDWARE_AVAILABLE = hasattr(board, 'SCL') and hasattr(board, 'SDA')
+    if not HARDWARE_AVAILABLE:
+        logging.warning("Board pins not available. Running in simulation mode.")
 except ImportError:
     HARDWARE_AVAILABLE = False
     logging.warning("IMU libraries not available. Running in simulation mode.")
