@@ -1,0 +1,7 @@
+# Exclude tests from release archives
+/tests export-ignore
+/.github export-ignore
+.pytest_cache export-ignore
+__pycache__ export-ignore
+*.pyc export-ignore
+venv/ export-ignore
